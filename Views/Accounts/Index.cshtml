@@ -1,0 +1,70 @@
+﻿@*
+This line tells the View what kind of data to expect from the Controller.
+In this case, it's a list of FinancialAccount objects.
+*@
+@model IEnumerable<PersonalFinanceDashboard.Models.FinancialAccount>
+
+@{
+    ViewData["Title"] = "My Accounts";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<p>
+    @* This creates a link to the "Create" action in the AccountsController *@
+    <a asp-action="Create" class="btn btn-primary">Add New Account</a>
+</p>
+
+@* Check if there are any accounts in the model passed from the controller *@
+@if (Model.Any())
+{
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>
+                    @* This gets the display name of the property from the model *@
+                    @Html.DisplayNameFor(model => model.AccountName)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.AccountType)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.CurrentBalance)
+                </th>
+                <th></th> @* Empty header for action buttons like Edit/Delete *@
+            </tr>
+        </thead>
+        <tbody>
+            @* Loop through each account in the model and create a table row *@
+            @foreach (var account in Model)
+            {
+                <tr>
+                    <td>
+                        @Html.DisplayFor(modelItem => account.AccountName)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => account.AccountType)
+                    </td>
+                    <td>
+                        @* Format the decimal value as currency (e.g., $1,234.56) *@
+                        @account.CurrentBalance.ToString("C")
+                    </td>
+                    <td>
+                        @* Placeholder links for future features *@
+                        <a asp-action="Edit" asp-route-id="@account.ID">Edit</a> |
+                        <a asp-action="Details" asp-route-id="@account.ID">Details</a> |
+                        <a asp-action="Delete" asp-route-id="@account.ID">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <div class="text-center">
+        <p class="lead">You haven't added any financial accounts yet.</p>
+        <p>Get started by adding your first one!</p>
+        <a asp-action="displayCreateAccountForm" class="btn btn-lg btn-success mt-3">Add Your First Account</a>
+    </div>
+}

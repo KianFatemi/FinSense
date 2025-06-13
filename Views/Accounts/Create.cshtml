@@ -1,0 +1,22 @@
+﻿<div class="container">
+	<h2>Create Account</h2>
+	<form asp-action="CreateAccount" method="post"> 
+		<div>
+			<label>Account Name</label>
+			<input type="text" name="AccountName" value="" />
+		</div>
+		<div>
+			<label>Account Type</label>
+			<input type="text" name="AccountType" value="" />
+		</div>
+		<div>
+			<label>Current Balance</label>
+			<input type="text" name="CurrentBalance" value="" />
+		</div>
+		<div class="form-group">
+			<button type="submit" class="btn btn-primary">Create</button>
+			<a asp-action="Index" class="btn btn-secondary">Cancel</a>
+		</div>
+	</form>
+</div>
+
