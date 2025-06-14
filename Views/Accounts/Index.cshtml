@@ -12,8 +12,10 @@ In this case, it's a list of FinancialAccount objects.
 
 <p>
     @* This creates a link to the "Create" action in the AccountsController *@
-    <a asp-action="Create" class="btn btn-primary">Add New Account</a>
+    <a asp-action="displayCreateAccountForm" class="btn btn-primary">Add New Account</a>
+    <button id="link-account-button" class=" = btn btn-primary">Link New Bank Account</button>
 </p>
+
 
 @* Check if there are any accounts in the model passed from the controller *@
 @if (Model.Any())
@@ -67,4 +69,74 @@ else
         <p>Get started by adding your first one!</p>
         <a asp-action="displayCreateAccountForm" class="btn btn-lg btn-success mt-3">Add Your First Account</a>
     </div>
+}
+
+@section Scripts {
+    <script src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const linkButton = document.getElementById('link-account-button');
+
+            linkButton.addEventListener('click', async function () {
+                console.log("Link button clicked. Requesting link_token...");
+                const response = await fetch('/api/plaid/create_link_token', {
+                    method: 'POST',
+                });
+                const data = await response.json();
+                const linkToken = data.link_token;
+                console.log("Successfully received link_token.");
+
+                const handler = Plaid.create({
+                    token: linkToken,
+                    onSuccess: async (public_token, metadata) => {
+                        // --- THIS IS THE CRITICAL AREA ---
+
+                        // 1. Did this function even run?
+                        console.log("onSuccess callback triggered!");
+
+                        // 2. Did we receive the public_token?
+                        console.log("Public token received:", public_token);
+
+                        try {
+                            // 3. Are we attempting to send it to the server?
+                            console.log("Attempting to exchange public token on the backend...");
+                            const exchangeResponse = await fetch('/api/plaid/exchange_public_token', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({ PublicToken: public_token }),
+                            });
+
+                            // 4. Did the server respond without an error?
+                            if (!exchangeResponse.ok) {
+                                console.error("Server responded with an error:", exchangeResponse.status, exchangeResponse.statusText);
+                                const errorData = await exchangeResponse.json();
+                                console.error("Server error details:", errorData);
+                                alert("There was an error linking your account. Please check the console.");
+                                return; // Stop execution if there was a server error
+                            }
+
+                            console.log("Successfully exchanged token. Reloading page...");
+                            window.location.reload();
+
+                        } catch (error) {
+                            // 5. Was there a network error or other JS failure?
+                            console.error("A JavaScript or network error occurred during fetch:", error);
+                            alert("A critical error occurred. Please check the console.");
+                        }
+                    },
+                    onExit: (err, metadata) => {
+                        if (err != null) {
+                            console.error("Plaid Link exited with an error:", err);
+                        } else {
+                            console.log("User exited Plaid Link without error.");
+                        }
+                    },
+                });
+
+                handler.open();
+            });
+        });
+    </script>
 }
