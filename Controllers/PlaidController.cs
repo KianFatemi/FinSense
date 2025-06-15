@@ -35,7 +35,7 @@ namespace PersonalFinanceDashboard.Controllers
         [HttpPost("create_link_token")]
         public async Task<IActionResult> CreateLinkToken()
         {
-            var currentUser = _userManager.GetUserAsync(User).Result;
+            var currentUser = await _userManager.GetUserAsync(User);
             if (currentUser == null)
             {
                 // Handle the case where the user is not logged in or null
@@ -54,34 +54,53 @@ namespace PersonalFinanceDashboard.Controllers
         }
 
         [HttpPost("exchange_public_token")]
-        public async Task<IActionResult> ExchangePublicToken(string publicToken)
+        public async Task<IActionResult> ExchangePublicToken([FromBody] PublicTokenExchangeRequestDto requestDto)
         {
             var currentUser = await _userManager.GetUserAsync(User);
-
             if (currentUser == null)
             {
-                // Handle the case where the user is not logged in or null
                 return Unauthorized("User is not authenticated.");
             }
 
-            ItemPublicTokenExchangeRequest request = new ItemPublicTokenExchangeRequest
+            var exchangeRequest = new ItemPublicTokenExchangeRequest
             {
-                PublicToken = publicToken
+                PublicToken = requestDto.PublicToken
             };
-
-            var response = await _plaidClient.ItemPublicTokenExchangeAsync(request);
+            var exchangeResponse = await _plaidClient.ItemPublicTokenExchangeAsync(exchangeRequest);
 
             var plaidItem = new PlaidItem
             {
-                UserID = _userManager.GetUserId(User),
-                AccessToken = response.AccessToken,
-                ItemID = response.ItemId
+                UserID = currentUser.Id, // Use the user object we already fetched
+                AccessToken = exchangeResponse.AccessToken,
+                ItemID = exchangeResponse.ItemId
             };
-
             _context.PlaidItems.Add(plaidItem);
             await _context.SaveChangesAsync();
 
-            return Ok(new {message = "Plaid item saved successfully."});
+            // --- NEW LOGIC STARTS HERE ---
+            // Step 3: Use the new access_token to fetch the list of accounts from Plaid
+            var accountsGetRequest = new AccountsGetRequest
+            {
+                AccessToken = exchangeResponse.AccessToken
+            };
+            var accountsResponse = await _plaidClient.AccountsGetAsync(accountsGetRequest);
+
+            foreach (var account in accountsResponse.Accounts)
+            {
+                var newFinancialAccount = new FinancialAccount
+                {
+                    AccountName = account.Name,
+                    PlaidAccountID = account.AccountId, 
+                    AccountType = account.Subtype.ToString(), 
+                    CurrentBalance = account.Balances.Current ?? 0m,
+                    UserID = currentUser.Id, 
+                };
+                _context.FinancialAccounts.Add(newFinancialAccount);
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Plaid item and financial accounts saved successfully." });
         }
 
 
