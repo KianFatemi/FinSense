@@ -5,14 +5,14 @@
 namespace PersonalFinanceDashboard.Migrations
 {
     /// <inheritdoc />
-    public partial class FinancialAccount : Migration
+    public partial class AddPlaidTransactionIdToTransaction : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<string>(
-                name: "PlaidAccountID",
-                table: "FinancialAccounts",
+                name: "PlaidTransactionId",
+                table: "Transactions",
                 type: "text",
                 nullable: true);
         }
@@ -21,8 +21,8 @@ namespace PersonalFinanceDashboard.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "PlaidAccountID",
-                table: "FinancialAccounts");
+                name: "PlaidTransactionId",
+                table: "Transactions");
         }
     }
 }

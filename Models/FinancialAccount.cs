@@ -10,6 +10,8 @@ namespace PersonalFinanceDashboard.Models
         public decimal CurrentBalance { get; set; }
         public string? UserID { get; set; }
         public string? PlaidAccountID { get; set; }
+        public PlaidItem? PlaidItem { get; set; }
+        public int? PlaidItemID { get; set; }
         public IdentityUser? User { get; set; }
         public ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
 

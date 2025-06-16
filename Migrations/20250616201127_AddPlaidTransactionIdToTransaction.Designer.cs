@@ -12,8 +12,8 @@ using PersonalFinanceDashboard.Data;
 namespace PersonalFinanceDashboard.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250613193021_AddFinancialModels")]
-    partial class AddFinancialModels
+    [Migration("20250616201127_AddPlaidTransactionIdToTransaction")]
+    partial class AddPlaidTransactionIdToTransaction
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -242,6 +242,41 @@ namespace PersonalFinanceDashboard.Migrations
                     b.Property<decimal>("CurrentBalance")
                         .HasColumnType("numeric");
 
+                    b.Property<string>("PlaidAccountID")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("PlaidItemID")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("UserID")
+                        .HasColumnType("text");
+
+                    b.HasKey("ID");
+
+                    b.HasIndex("PlaidItemID");
+
+                    b.HasIndex("UserID");
+
+                    b.ToTable("FinancialAccounts");
+                });
+
+            modelBuilder.Entity("PersonalFinanceDashboard.Models.PlaidItem", b =>
+                {
+                    b.Property<int>("ID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ID"));
+
+                    b.Property<string>("AccessToken")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ItemID")
+                        .HasColumnType("text");
+
+                    b.Property<string>("LastSyncCursor")
+                        .HasColumnType("text");
+
                     b.Property<string>("UserID")
                         .HasColumnType("text");
 
@@ -249,7 +284,7 @@ namespace PersonalFinanceDashboard.Migrations
 
                     b.HasIndex("UserID");
 
-                    b.ToTable("FinancialAccounts");
+                    b.ToTable("PlaidItems");
                 });
 
             modelBuilder.Entity("PersonalFinanceDashboard.Models.Transaction", b =>
@@ -271,6 +306,9 @@ namespace PersonalFinanceDashboard.Migrations
 
                     b.Property<int>("FinancialAccountId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("PlaidTransactionId")
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("TransactionDate")
                         .HasColumnType("timestamp with time zone");
@@ -334,6 +372,21 @@ namespace PersonalFinanceDashboard.Migrations
                 });
 
             modelBuilder.Entity("PersonalFinanceDashboard.Models.FinancialAccount", b =>
+                {
+                    b.HasOne("PersonalFinanceDashboard.Models.PlaidItem", "PlaidItem")
+                        .WithMany()
+                        .HasForeignKey("PlaidItemID");
+
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserID");
+
+                    b.Navigation("PlaidItem");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("PersonalFinanceDashboard.Models.PlaidItem", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "User")
                         .WithMany()

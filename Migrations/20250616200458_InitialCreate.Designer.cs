@@ -12,8 +12,8 @@ using PersonalFinanceDashboard.Data;
 namespace PersonalFinanceDashboard.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250614195927_FinancialAccount")]
-    partial class FinancialAccount
+    [Migration("20250616200458_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -245,10 +245,15 @@ namespace PersonalFinanceDashboard.Migrations
                     b.Property<string>("PlaidAccountID")
                         .HasColumnType("text");
 
+                    b.Property<int?>("PlaidItemID")
+                        .HasColumnType("integer");
+
                     b.Property<string>("UserID")
                         .HasColumnType("text");
 
                     b.HasKey("ID");
+
+                    b.HasIndex("PlaidItemID");
 
                     b.HasIndex("UserID");
 
@@ -301,6 +306,9 @@ namespace PersonalFinanceDashboard.Migrations
 
                     b.Property<int>("FinancialAccountId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("PlaidTransactionId")
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("TransactionDate")
                         .HasColumnType("timestamp with time zone");
@@ -365,9 +373,15 @@ namespace PersonalFinanceDashboard.Migrations
 
             modelBuilder.Entity("PersonalFinanceDashboard.Models.FinancialAccount", b =>
                 {
+                    b.HasOne("PersonalFinanceDashboard.Models.PlaidItem", "PlaidItem")
+                        .WithMany()
+                        .HasForeignKey("PlaidItemID");
+
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "User")
                         .WithMany()
                         .HasForeignKey("UserID");
+
+                    b.Navigation("PlaidItem");
 
                     b.Navigation("User");
                 });

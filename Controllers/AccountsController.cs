@@ -31,9 +31,7 @@ public class AccountsController : Controller
             return RedirectToAction("Login", "Account");
         }
 
-        var financialAccounts = await _context.FinancialAccounts
-                                              .Where(a => a.UserID == currentUser.Id)
-                                              .ToListAsync();
+        var financialAccounts = await _context.FinancialAccounts.Include(a => a.PlaidItem).Where(a => a.UserID == currentUser.Id).ToListAsync();
 
         // Pass the list of accounts to the View
         return View(financialAccounts);

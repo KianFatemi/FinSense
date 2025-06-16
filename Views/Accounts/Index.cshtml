@@ -56,6 +56,9 @@ In this case, it's a list of FinancialAccount objects.
                         <a asp-action="Edit" asp-route-id="@account.ID">Edit</a> |
                         <a asp-action="Details" asp-route-id="@account.ID">Details</a> |
                         <a asp-action="Delete" asp-route-id="@account.ID">Delete</a>
+                            <button class="btn btn-info btn-sm sync-button" data-plaid-item-id="@account.PlaidItem?.ID ?? 0">
+                            Sync
+                        </button>
                     </td>
                 </tr>
             }
@@ -76,30 +79,20 @@ else
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const linkButton = document.getElementById('link-account-button');
+         
 
             linkButton.addEventListener('click', async function () {
-                console.log("Link button clicked. Requesting link_token...");
                 const response = await fetch('/api/plaid/create_link_token', {
                     method: 'POST',
                 });
                 const data = await response.json();
                 const linkToken = data.link_token;
-                console.log("Successfully received link_token.");
 
                 const handler = Plaid.create({
                     token: linkToken,
                     onSuccess: async (public_token, metadata) => {
-                        // --- THIS IS THE CRITICAL AREA ---
-
-                        // 1. Did this function even run?
-                        console.log("onSuccess callback triggered!");
-
-                        // 2. Did we receive the public_token?
-                        console.log("Public token received:", public_token);
-
+                       
                         try {
-                            // 3. Are we attempting to send it to the server?
-                            console.log("Attempting to exchange public token on the backend...");
                             const exchangeResponse = await fetch('/api/plaid/exchange_public_token', {
                                 method: 'POST',
                                 headers: {
@@ -108,20 +101,16 @@ else
                                 body: JSON.stringify({ PublicToken: public_token }),
                             });
 
-                            // 4. Did the server respond without an error?
                             if (!exchangeResponse.ok) {
                                 console.error("Server responded with an error:", exchangeResponse.status, exchangeResponse.statusText);
                                 const errorData = await exchangeResponse.json();
                                 console.error("Server error details:", errorData);
-                                alert("There was an error linking your account. Please check the console.");
-                                return; // Stop execution if there was a server error
+                                return; 
                             }
 
-                            console.log("Successfully exchanged token. Reloading page...");
                             window.location.reload();
 
                         } catch (error) {
-                            // 5. Was there a network error or other JS failure?
                             console.error("A JavaScript or network error occurred during fetch:", error);
                             alert("A critical error occurred. Please check the console.");
                         }
@@ -137,6 +126,40 @@ else
 
                 handler.open();
             });
+            document.querySelectorAll('.sync-button').forEach(button => {
+            button.addEventListener('click', async function() {
+                const plaidItemId = this.getAttribute('data-plaid-item-id');
+                console.log(`Syncing Plaid Item ID: ${plaidItemId}`);
+
+                // Provide visual feedback to the user
+                this.textContent = 'Syncing...';
+                this.disabled = true;
+
+                try {
+                    const response = await fetch('/api/plaid/sync_account_transactions', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ PlaidItemId: parseInt(plaidItemId) })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Server responded with an error during sync.');
+                    }
+
+                    const result = await response.json();
+                    alert(result.message); // Show the success message from the server
+                    window.location.reload(); // Reload to see new transactions
+
+                } catch (error) {
+                    console.error('Failed to sync transactions:', error);
+                    alert('Failed to sync transactions. See console for details.');
+                    this.textContent = 'Sync'; // Reset button text on failure
+                    this.disabled = false;
+                }
+            });
+        });
         });
     </script>
 }

@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace PersonalFinanceDashboard.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialIdentitySchema : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -157,6 +157,79 @@ namespace PersonalFinanceDashboard.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "PlaidItems",
+                columns: table => new
+                {
+                    ID = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UserID = table.Column<string>(type: "text", nullable: true),
+                    AccessToken = table.Column<string>(type: "text", nullable: true),
+                    ItemID = table.Column<string>(type: "text", nullable: true),
+                    LastSyncCursor = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PlaidItems", x => x.ID);
+                    table.ForeignKey(
+                        name: "FK_PlaidItems_AspNetUsers_UserID",
+                        column: x => x.UserID,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "FinancialAccounts",
+                columns: table => new
+                {
+                    ID = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    AccountName = table.Column<string>(type: "text", nullable: true),
+                    AccountType = table.Column<string>(type: "text", nullable: true),
+                    CurrentBalance = table.Column<decimal>(type: "numeric", nullable: false),
+                    UserID = table.Column<string>(type: "text", nullable: true),
+                    PlaidAccountID = table.Column<string>(type: "text", nullable: true),
+                    PlaidItemID = table.Column<int>(type: "integer", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_FinancialAccounts", x => x.ID);
+                    table.ForeignKey(
+                        name: "FK_FinancialAccounts_AspNetUsers_UserID",
+                        column: x => x.UserID,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_FinancialAccounts_PlaidItems_PlaidItemID",
+                        column: x => x.PlaidItemID,
+                        principalTable: "PlaidItems",
+                        principalColumn: "ID");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Transactions",
+                columns: table => new
+                {
+                    ID = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Description = table.Column<string>(type: "text", nullable: true),
+                    Amount = table.Column<decimal>(type: "numeric", nullable: false),
+                    TransactionDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Category = table.Column<string>(type: "text", nullable: true),
+                    FinancialAccountId = table.Column<int>(type: "integer", nullable: false),
+                    PlaidTransactionId = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Transactions", x => x.ID);
+                    table.ForeignKey(
+                        name: "FK_Transactions_FinancialAccounts_FinancialAccountId",
+                        column: x => x.FinancialAccountId,
+                        principalTable: "FinancialAccounts",
+                        principalColumn: "ID",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
                 table: "AspNetRoleClaims",
@@ -193,6 +266,26 @@ namespace PersonalFinanceDashboard.Migrations
                 table: "AspNetUsers",
                 column: "NormalizedUserName",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FinancialAccounts_PlaidItemID",
+                table: "FinancialAccounts",
+                column: "PlaidItemID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FinancialAccounts_UserID",
+                table: "FinancialAccounts",
+                column: "UserID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PlaidItems_UserID",
+                table: "PlaidItems",
+                column: "UserID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Transactions_FinancialAccountId",
+                table: "Transactions",
+                column: "FinancialAccountId");
         }
 
         /// <inheritdoc />
@@ -214,7 +307,16 @@ namespace PersonalFinanceDashboard.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
+                name: "Transactions");
+
+            migrationBuilder.DropTable(
                 name: "AspNetRoles");
+
+            migrationBuilder.DropTable(
+                name: "FinancialAccounts");
+
+            migrationBuilder.DropTable(
+                name: "PlaidItems");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");

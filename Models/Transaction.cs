@@ -8,6 +8,7 @@
         public DateTime TransactionDate { get; set; }
         public string? Category { get; set; }
         public int FinancialAccountId { get; set; }
+        public string? PlaidTransactionId { get; set; }
         public FinancialAccount? FinancialAccount { get; set; }
     }
 }

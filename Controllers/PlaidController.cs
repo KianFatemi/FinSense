@@ -77,8 +77,6 @@ namespace PersonalFinanceDashboard.Controllers
             _context.PlaidItems.Add(plaidItem);
             await _context.SaveChangesAsync();
 
-            // --- NEW LOGIC STARTS HERE ---
-            // Step 3: Use the new access_token to fetch the list of accounts from Plaid
             var accountsGetRequest = new AccountsGetRequest
             {
                 AccessToken = exchangeResponse.AccessToken
@@ -93,7 +91,8 @@ namespace PersonalFinanceDashboard.Controllers
                     PlaidAccountID = account.AccountId, 
                     AccountType = account.Subtype.ToString(), 
                     CurrentBalance = account.Balances.Current ?? 0m,
-                    UserID = currentUser.Id, 
+                    UserID = currentUser.Id,
+                    PlaidItemID = plaidItem.ID
                 };
                 _context.FinancialAccounts.Add(newFinancialAccount);
             }
@@ -103,14 +102,13 @@ namespace PersonalFinanceDashboard.Controllers
             return Ok(new { message = "Plaid item and financial accounts saved successfully." });
         }
 
-
+        [HttpPost("sync_account_transactions")]
         public async Task<IActionResult> SyncTransactions([FromBody] SyncTransactionsRequestDto requestDto)
         {
             var currentUser = await _userManager.GetUserAsync(User);
 
             if (currentUser == null)
             {
-                // Handle the case where the user is not logged in or null
                 return Unauthorized("User is not authenticated.");
             }
 
@@ -146,46 +144,61 @@ namespace PersonalFinanceDashboard.Controllers
                     .FirstOrDefaultAsync(fa => fa.PlaidAccountID == transaction.AccountId);
 
                 if (financialAccount == null) {
-                    var account = await GetFinacialAccount(currentUser, plaidItem);
-                    financialAccount = (FinancialAccount)account; // Ensure financialAccount is assigned
-                    _context.FinancialAccounts.Add((FinancialAccount)account);
-                    await _context.SaveChangesAsync();
+                    Console.WriteLine($"Skipping transactionbecause linked account {transaction.AccountId} was not found.");
                 }
 
-                var newTransaction = new Transaction
+                var transactionExists = await _context.Transactions.AnyAsync(t => t.PlaidTransactionId == transaction.TransactionId);
+                if (!transactionExists)
                 {
-                    Description = transaction.OriginalDescription,
-                    Amount = transaction.Amount ?? 0m,
-                    TransactionDate = transaction.Date.HasValue ? transaction.Date.Value.ToDateTime(TimeOnly.MinValue) : DateTime.MinValue,
-                    Category = transaction.PersonalFinanceCategory?.Detailed,
-                    FinancialAccountId = financialAccount.ID
-                };
-                _context.Transactions.Add(newTransaction);
+                var dateValue = transaction.Date?.ToDateTime(TimeOnly.MinValue) ?? DateTime.MinValue;
+
+                var newTransaction = new Transaction
+                    {
+                        Description = transaction.OriginalDescription,
+                        Amount = transaction.Amount ?? 0m,
+                        TransactionDate = DateTime.SpecifyKind(dateValue, DateTimeKind.Utc),
+                        Category = transaction.PersonalFinanceCategory?.Detailed,
+                        FinancialAccountId = financialAccount.ID,
+                        PlaidTransactionId = transaction.TransactionId
+                    };
+                    _context.Transactions.Add(newTransaction);
+                }
             }
-            plaidItem.LastSyncCursor = cursor;  
-            await _context.SaveChangesAsync();
+
+            var accountsGetRequest = new AccountsGetRequest { AccessToken = plaidItem.AccessToken };
+            var accountsResponse = await _plaidClient.AccountsGetAsync(accountsGetRequest);
+
+            foreach (var plaidAccount  in accountsResponse.Accounts)
+            {
+                var dbAccount = await _context.FinancialAccounts.FirstOrDefaultAsync(fa => fa.PlaidAccountID == plaidAccount.AccountId && fa.UserID == currentUser.Id);
+                if (dbAccount != null)
+                {
+                    dbAccount.CurrentBalance = plaidAccount.Balances.Current ?? dbAccount.CurrentBalance;
+                }
+            }
+
+            plaidItem.LastSyncCursor = cursor;
+            try
+            {
+                // Set a breakpoint on the line below
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                // The real, specific error from PostgreSQL is in the InnerException.
+                Console.WriteLine("An error occurred while saving to the database.");
+                Console.WriteLine($"EF Core Error: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    // ---> THIS IS THE MOST IMPORTANT ERROR MESSAGE <---
+                    Console.WriteLine($"Database Error: {ex.InnerException.Message}");
+                }
+
+                // Re-throw the exception so the frontend still sees a 500 error
+                throw;
+            }
+
             return Ok(new { message = $"Synced {newTransactions.Count} new transactions." });
-        }
-
-        public async Task<IActionResult> GetFinacialAccount([FromBody] IdentityUser currentUser,[FromQuery] PlaidItem plaidItem)
-        {
-            AccountsGetRequest request = new AccountsGetRequest
-            {
-                AccessToken = plaidItem.AccessToken
-            };
-
-            var response = await _plaidClient.AccountsGetAsync(request);
-            var newAccounts = response.Accounts;
-            return Ok(newAccounts.Select(a => new FinancialAccount
-            {
-                AccountName = a.Name,
-                AccountType = a.Type.ToString(),
-                CurrentBalance = a.Balances.Current ?? 0m,
-                PlaidAccountID = a.AccountId,
-                UserID = currentUser.Id
-            }));
-
-
         }
 
         public class PublicTokenExchangeRequestDto
