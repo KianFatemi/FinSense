@@ -184,17 +184,13 @@ namespace PersonalFinanceDashboard.Controllers
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateException ex)
-            {
-                // The real, specific error from PostgreSQL is in the InnerException.
+            { 
                 Console.WriteLine("An error occurred while saving to the database.");
                 Console.WriteLine($"EF Core Error: {ex.Message}");
                 if (ex.InnerException != null)
                 {
-                    // ---> THIS IS THE MOST IMPORTANT ERROR MESSAGE <---
                     Console.WriteLine($"Database Error: {ex.InnerException.Message}");
                 }
-
-                // Re-throw the exception so the frontend still sees a 500 error
                 throw;
             }
 
@@ -208,7 +204,6 @@ namespace PersonalFinanceDashboard.Controllers
 
         public class SyncTransactionsRequestDto
         {
-            // The ID of our PlaidItem in our own database.
             public int PlaidItemId { get; set; }
         }
     }

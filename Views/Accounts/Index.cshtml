@@ -1,8 +1,4 @@
-﻿@*
-This line tells the View what kind of data to expect from the Controller.
-In this case, it's a list of FinancialAccount objects.
-*@
-@model IEnumerable<PersonalFinanceDashboard.Models.FinancialAccount>
+﻿@model IEnumerable<PersonalFinanceDashboard.Models.FinancialAccount>
 
 @{
     ViewData["Title"] = "My Accounts";
@@ -11,7 +7,6 @@ In this case, it's a list of FinancialAccount objects.
 <h1>@ViewData["Title"]</h1>
 
 <p>
-    @* This creates a link to the "Create" action in the AccountsController *@
     <a asp-action="displayCreateAccountForm" class="btn btn-primary">Add New Account</a>
     <button id="link-account-button" class=" = btn btn-primary">Link New Bank Account</button>
 </p>
@@ -24,7 +19,7 @@ In this case, it's a list of FinancialAccount objects.
         <thead>
             <tr>
                 <th>
-                    @* This gets the display name of the property from the model *@
+                    @*gets the display name of the property from the model *@
                     @Html.DisplayNameFor(model => model.AccountName)
                 </th>
                 <th>
@@ -33,7 +28,7 @@ In this case, it's a list of FinancialAccount objects.
                 <th>
                     @Html.DisplayNameFor(model => model.CurrentBalance)
                 </th>
-                <th></th> @* Empty header for action buttons like Edit/Delete *@
+                <th></th> 
             </tr>
         </thead>
         <tbody>
@@ -48,11 +43,10 @@ In this case, it's a list of FinancialAccount objects.
                         @Html.DisplayFor(modelItem => account.AccountType)
                     </td>
                     <td>
-                        @* Format the decimal value as currency (e.g., $1,234.56) *@
+                        @* Format the decimal value as currency*@
                         @account.CurrentBalance.ToString("C")
                     </td>
                     <td>
-                        @* Placeholder links for future features *@
                         <a asp-action="Edit" asp-route-id="@account.ID">Edit</a> |
                         <a asp-action="Details" asp-route-id="@account.ID">Details</a> |
                         <a asp-action="Delete" asp-route-id="@account.ID">Delete</a>
@@ -155,7 +149,7 @@ else
                 } catch (error) {
                     console.error('Failed to sync transactions:', error);
                     alert('Failed to sync transactions. See console for details.');
-                    this.textContent = 'Sync'; // Reset button text on failure
+                    this.textContent = 'Sync'; 
                     this.disabled = false;
                 }
             });

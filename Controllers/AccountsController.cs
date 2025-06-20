@@ -37,6 +37,27 @@ public class AccountsController : Controller
         return View(financialAccounts);
     }
 
+    public async Task<IActionResult> Details(int id)
+    {
+
+        var currentUser = await _userManager.GetUserAsync(User);
+
+        if (currentUser == null)
+        {
+            return RedirectToAction("Login", "Account");
+        }
+
+        var account = await _context.FinancialAccounts
+                                        .Include(a => a.Transactions)
+                                        .FirstOrDefaultAsync(a => a.ID == id && a.UserID == currentUser.Id);
+        if (account == null)
+        {
+            return NotFound();
+        }
+
+        return View(account);
+    }
+
     public ViewResult displayCreateAccountForm()
     {
         return View("Create");
@@ -46,7 +67,6 @@ public class AccountsController : Controller
     {
         if (ModelState.IsValid)
         {
-            // Get the currently logged in user object
             var currentUser = await _userManager.GetUserAsync(User);
             if (currentUser == null)
             {
