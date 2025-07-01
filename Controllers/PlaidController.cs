@@ -48,6 +48,10 @@ namespace PersonalFinanceDashboard.Controllers
                 Products = new[] { Products.Transactions }, 
                 CountryCodes = new[] { CountryCode.Us },
                 Language = Language.English,
+                Transactions = new LinkTokenTransactions
+                {
+                    DaysRequested = 730
+                },
             };
             var response = await _plaidClient.LinkTokenCreateAsync(request);
             return Ok(response);
@@ -152,10 +156,22 @@ namespace PersonalFinanceDashboard.Controllers
                 {
                 var dateValue = transaction.Date?.ToDateTime(TimeOnly.MinValue) ?? DateTime.MinValue;
 
+                decimal amountToStore = transaction.Amount ?? 0m;
+
+                
+                if (transaction.PersonalFinanceCategory?.Detailed != "INCOME")
+                    {
+                        if (amountToStore > 0)
+                        {
+                            amountToStore *= -1;
+                        }
+                    }
+                    
+
                 var newTransaction = new Transaction
                     {
                         Description = transaction.OriginalDescription,
-                        Amount = transaction.Amount ?? 0m,
+                        Amount = amountToStore,
                         TransactionDate = DateTime.SpecifyKind(dateValue, DateTimeKind.Utc),
                         Category = transaction.PersonalFinanceCategory?.Detailed,
                         FinancialAccountId = financialAccount.ID,
