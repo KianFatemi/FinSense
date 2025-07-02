@@ -20,3 +20,158 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+/* Import Bootstrap Icons */
+@import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css");
+
+/* Main Dashboard Layout */
+.dashboard-container {
+    display: flex;
+    background-color: #f4f7fe; /* Light blue-grey background for main content */
+}
+
+.sidebar {
+    width: 260px;
+    background-color: #1a1a2e; /* Dark blue sidebar */
+    color: #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+.sidebar-header {
+    padding: 1.25rem;
+    border-bottom: 1px solid #2a2a3e;
+}
+
+.sidebar .nav-link {
+    color: #a0a0b8;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.95rem;
+    border-radius: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+    .sidebar .nav-link.active,
+    .sidebar .nav-link:hover {
+        background-color: #2a2a3e;
+        color: #ffffff;
+    }
+
+.sidebar-footer {
+    margin-top: auto;
+}
+
+.contact-box {
+    background-color: #2a2a3e;
+    border-radius: 0.75rem;
+    margin: 1.25rem;
+}
+
+.logout-link {
+    display: block;
+    padding: 0.75rem 1.25rem;
+    text-decoration: none;
+    color: #a0a0b8;
+}
+
+    .logout-link:hover {
+        color: #ffffff;
+    }
+
+.main-content {
+    flex-grow: 1;
+    padding: 2rem;
+    height: 100vh;
+    overflow-y: auto;
+}
+
+.header-icons i {
+    font-size: 1.25rem;
+    margin-left: 1.5rem;
+    cursor: pointer;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-left: 1.5rem;
+}
+
+/* Cards */
+.summary-card, .chart-card {
+    background-color: #ffffff;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    height: 100%;
+}
+
+    .summary-card .card-icon {
+        font-size: 1.5rem;
+        margin-bottom: 0.75rem;
+        color: #1a1a2e;
+    }
+
+    .summary-card .total-balance-icon {
+        color: #007bff;
+    }
+
+    .summary-card .card-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-bottom: 0.25rem;
+    }
+
+    .summary-card .card-value {
+        font-size: 1.75rem;
+        font-weight: 600;
+    }
+
+    .chart-card .card-title {
+        margin-bottom: 1.5rem;
+    }
+
+/* Recent Transactions List */
+#recent-transactions-list .transaction-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+    #recent-transactions-list .transaction-item:last-child {
+        border-bottom: none;
+    }
+
+#recent-transactions-list .transaction-details {
+    display: flex;
+    align-items: center;
+}
+
+#recent-transactions-list .transaction-icon {
+    font-size: 1.5rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    background-color: #e9ecef;
+}
+
+#recent-transactions-list .transaction-name {
+    font-weight: 600;
+}
+
+#recent-transactions-list .transaction-category {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+#recent-transactions-list .transaction-amount {
+    font-weight: 600;
+}

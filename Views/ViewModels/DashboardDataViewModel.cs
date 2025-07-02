@@ -7,8 +7,15 @@ namespace PersonalFinanceDashboard.Views.ViewModels
         public decimal TotalBalance { get; set; }
         public decimal MainAccountBalance { get; set; }
         public decimal SavingsBalance { get; set; }
-        public List<Transaction> RecentTransactions { get; set; } = new();
+        public List<TransactionViewModel> RecentTransactions { get; set; }
         public List<BalanceHistoryPoint> AccountBalanceHistory {  get; set; } = new();
+    }
+
+    public class TransactionViewModel
+    {
+        public string? Category { get; set; }
+        public decimal Amount { get; set; }
+        public DateTime TransactionDate { get; set; }
     }
 
     public class BalanceHistoryPoint

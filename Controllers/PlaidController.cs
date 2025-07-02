@@ -166,11 +166,11 @@ namespace PersonalFinanceDashboard.Controllers
                             amountToStore *= -1;
                         }
                     }
-                    
 
-                var newTransaction = new Transaction
+
+                    var newTransaction = new Transaction
                     {
-                        Description = transaction.OriginalDescription,
+                        Description = transaction.Counterparties?.FirstOrDefault()?.Name,
                         Amount = amountToStore,
                         TransactionDate = DateTime.SpecifyKind(dateValue, DateTimeKind.Utc),
                         Category = transaction.PersonalFinanceCategory?.Detailed,

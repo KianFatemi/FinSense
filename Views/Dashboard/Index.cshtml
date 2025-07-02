@@ -2,70 +2,211 @@
 	ViewData["Title"] = "Dashboard";
 }
 
-<div class="text-center">
-	<h1 class="display-4">Your Financial Dashboard</h1>
-</div>
+<div class="dashboard-container">
 
-<div class="row mt-5">
-    <div class="col-md-8 offset-md-2">
-        <div class="card">
-            <div class="card-header">
-                Spending by Category
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h3 class="text-white">FinSense</h3>
+        </div>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link active" href="#">
+                    <i class="bi bi-grid-1x2-fill me-2"></i> Overview
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-wallet2 me-2"></i> Budgets
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-receipt me-2"></i> Expenses
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-bar-chart-line-fill me-2"></i> Investments
+                </a>
+            </li>
+        </ul>
+        <div class="sidebar-footer">
+            <div class="contact-box">
+                <p class="fw-bold">Have a question?</p>
+                <p class="small">Get in touch and we will get back to you in no time.</p>
+                <button class="btn btn-light w-100">Contact Us</button>
             </div>
-            <div class="card-body">
-                <canvas id="spendingByCategoryChart"></canvas>
-            </div>
+            <a class="logout-link" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                <i class="bi bi-box-arrow-left me-2"></i> Log out
+            </a>
         </div>
     </div>
-    <div class="col-md-6">
+
+    <div class="main-content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h4>Welcome back, Ashley</h4>
+                <p class="text-muted">Here's an overview of all of your balances.</p>
+            </div>
+            <div class="header-icons">
+                <i class="bi bi-search"></i>
+                <i class="bi bi-bell"></i>
+                <img src="https://i.imgur.com/k9a4v5g.png" alt="User" class="user-avatar" />
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="summary-card">
+                    <div class="card-icon total-balance-icon"><i class="bi bi-bank2"></i></div>
+                    <div class="card-label">Total Balance</div>
+                    <div class="card-value" id="total-balance-value">$0.00</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="summary-card">
+                    <div class="card-icon"><i class="bi bi-credit-card"></i></div>
+                    <div class="card-label">Main Account</div>
+                    <div class="card-value" id="main-account-value">$0.00</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="summary-card">
+                    <div class="card-icon"><i class="bi bi-piggy-bank"></i></div>
+                    <div class="card-label">Savings</div>
+                    <div class="card-value" id="savings-value">$0.00</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="summary-card">
+                    <div class="card-icon"><i class="bi bi-graph-up-arrow"></i></div>
+                    <div class="card-label">Investments</div>
+                    <div class="card-value" id="investments-value">$0.00</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mt-3">
+            <div class="col-md-8">
+                <div class="chart-card">
+                    <h5 class="card-title">Account Balance</h5>
+                    <canvas id="accountBalanceChart"></canvas>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="chart-card">
+                    <h5 class="card-title">Investments</h5>
+                    <canvas id="investmentsDoughnutChart"></canvas>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="chart-card">
+                    <h5 class="card-title">Recent Transactions</h5>
+                    <div id="recent-transactions-list">
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        fetch('/Dashboard/GetSpendingByCategory')
-            .then(response => response.json())
-            .then(data => {
-                const labels = data.map(item => item.category);
-                const amounts = data.map(item => item.totalAmount);
-                const ctx = document.getElementById('spendingByCategoryChart').getContext('2d');
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-                const spendingChart = new Chart(ctx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            data: amounts,
-                            // You can add more colors for more categories
-                            backgroundColor: [
-                                'rgba(255, 99, 132, 0.8)',
-                                'rgba(54, 162, 235, 0.8)',
-                                'rgba(255, 206, 86, 0.8)',
-                                'rgba(75, 192, 192, 0.8)',
-                                'rgba(153, 102, 255, 0.8)',
-                                'rgba(255, 159, 64, 0.8)'
-                            ],
-                            hoverOffset: 4
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: {
-                                position: 'top',
-                            },
-                            title: {
-                                display: true,
-                                text: 'Total Spending by Category'
-                            }
-                        }
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+
+            // API call to get all dashboard data
+            fetch('/api/DashboardApi/GetDashboardData')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Network response was not ok: ${response.statusText}`);
                     }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("Dashboard data received:", data);
+
+                    // Helper function to format currency
+                    const formatCurrency = (value) => value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+
+                    
+                    document.getElementById('total-balance-value').textContent = formatCurrency(data.totalBalance);
+                    document.getElementById('main-account-value').textContent = formatCurrency(data.mainAccountBalance);
+                    document.getElementById('savings-value').textContent = formatCurrency(data.savingsBalance);
+                    document.getElementById('investments-value').textContent = formatCurrency(0); // Placeholder
+
+                    // Populate Recent Transactions
+                    const transactionList = document.getElementById('recent-transactions-list');
+                    transactionList.innerHTML = ''; // Clear existing content
+                    data.recentTransactions.forEach(tx => {
+                        const amountClass = tx.amount < 0 ? 'text-danger' : 'text-success';
+                        const iconClass = tx.amount < 0 ? 'bi-arrow-up-circle' : 'bi-arrow-down-circle';
+
+                        const transactionHtml = `
+                            <div class="transaction-item">
+                                <div class="transaction-details">
+                                    <div class="transaction-icon"><i class="bi ${iconClass}"></i></div>
+                                    <div>
+                                        <div class="transaction-name">${tx.description}</div>
+                                        <div class="transaction-category">${tx.category}</div>
+                                    </div>
+                                </div>
+                                <div class="transaction-amount ${amountClass}">${formatCurrency(tx.amount)}</div>
+                            </div>
+                        `;
+                        transactionList.insertAdjacentHTML('beforeend', transactionHtml);
+                    });
+
+
+                    // Render Account Balance Line Chart
+                    const balanceCtx = document.getElementById('accountBalanceChart').getContext('2d');
+                    new Chart(balanceCtx, {
+                        type: 'line',
+                        data: {
+                            labels: data.accountBalanceHistory.map(h => h.date),
+                            datasets: [{
+                                label: 'Total Balance',
+                                data: data.accountBalanceHistory.map(h => h.balance),
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                                fill: true,
+                                tension: 0.4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: { beginAtZero: false },
+                                x: { grid: { display: false } }
+                            },
+                            plugins: { legend: { display: false } }
+                        }
+                    });
+
+                    // Render Investments Doughnut Chart
+                     const doughnutCtx = document.getElementById('investmentsDoughnutChart').getContext('2d');
+                     new Chart(doughnutCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['VTI', 'VOO', 'STK', 'KSLN'],
+                            datasets: [{
+                                label: 'Holdings',
+                                data: [40, 30, 15, 15],
+                                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'],
+                            }]
+                        },
+                         options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+                    });
+
+                })
+                .catch(error => {
+                    console.error('There was a problem fetching the dashboard data:', error);
                 });
-            })
-            .catch(error => console.error('Error fetching chart data:', error));
-    });
+        });
     </script>
+}
 
 
