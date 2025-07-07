@@ -4,40 +4,6 @@
 
 <div class="dashboard-container">
 
-    <div class="sidebar">
-        <div class="sidebar-header">
-            <h3 class="text-white">FinSense</h3>
-        </div>
-        <ul class="nav flex-column">
-            <li class="nav-item">
-                <a class="nav-link active" href="#">
-                    <i class="bi bi-grid-1x2-fill me-2"></i> Overview
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" asp-controller="Accounts" asp-action="Index">
-                    <i class="bi bi-wallet2 me-2"></i> Accounts
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#">
-                    <i class="bi bi-receipt me-2"></i> Expenses
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#">
-                    <i class="bi bi-bar-chart-line-fill me-2"></i> Investments
-                </a>
-            </li>
-        </ul>
-        <div class="sidebar-footer">
-            
-            <a class="logout-link" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
-                <i class="bi bi-box-arrow-left me-2"></i> Log out
-            </a>
-        </div>
-    </div>
-
     <div class="main-content">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>

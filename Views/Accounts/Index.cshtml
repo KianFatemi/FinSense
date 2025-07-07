@@ -47,12 +47,16 @@
                         @account.CurrentBalance.ToString("C")
                     </td>
                     <td>
-                        <a asp-action="Edit" asp-route-id="@account.ID">Edit</a> |
-                        <a asp-action="Details" asp-route-id="@account.ID">Details</a> |
-                        <a asp-action="Delete" asp-route-id="@account.ID">Delete</a>
+                        <a class="btn btn-info btn-sm" asp-action="Details" asp-route-id="@account.ID">
+                            Details
+                        </a>
+                        <a class="btn btn-info btn-sm" asp-action="Details" asp-route-id="@account.ID">
+                            Delete
+                        </a>
                             <button class="btn btn-info btn-sm sync-button" data-plaid-item-id="@account.PlaidItem?.ID ?? 0">
                             Sync
                         </button>
+                        
                     </td>
                 </tr>
             }
