@@ -13,5 +13,7 @@ namespace PersonalFinanceDashboard.Data
         public DbSet<FinancialAccount> FinancialAccounts { get; set; }
         public DbSet<Transaction> Transactions { get; set; }
         public DbSet<PlaidItem> PlaidItems { get; set; }
+        public DbSet<Security> Securities { get; set; }
+        public DbSet<Holding> Holdings { get; set; }
     }
 }

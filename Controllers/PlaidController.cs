@@ -1,17 +1,20 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using PersonalFinanceDashboard.Data;
-using Going.Plaid.Link;
-using Going.Plaid;
-using Going.Plaid.Entity;
-using Going.Plaid.Item;
-using PersonalFinanceDashboard.Models;
-using Microsoft.EntityFrameworkCore;
-using Going.Plaid.Transactions;
-using Microsoft.AspNetCore.Authorization;
-using Transaction = PersonalFinanceDashboard.Models.Transaction;
-using Going.Plaid.Webhook;
+﻿using Going.Plaid;
 using Going.Plaid.Accounts;
+using Going.Plaid.Entity;
+using Going.Plaid.Investments;
+using Going.Plaid.Item;
+using Going.Plaid.Link;
+using Going.Plaid.Transactions;
+using Going.Plaid.Webhook;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using PersonalFinanceDashboard.Data;
+using PersonalFinanceDashboard.Models;
+using Holding = PersonalFinanceDashboard.Models.Holding;
+using Security = PersonalFinanceDashboard.Models.Security;
+using Transaction = PersonalFinanceDashboard.Models.Transaction;
 
 
 namespace PersonalFinanceDashboard.Controllers
@@ -45,7 +48,7 @@ namespace PersonalFinanceDashboard.Controllers
             {
                 User = new LinkTokenCreateRequestUser { ClientUserId = currentUser.Id },
                 ClientName = "Personal Finance Dashboard",
-                Products = new[] { Products.Transactions }, 
+                Products = new[] { Products.Transactions, Products.Investments }, 
                 CountryCodes = new[] { CountryCode.Us },
                 Language = Language.English,
                 Transactions = new LinkTokenTransactions
@@ -213,12 +216,106 @@ namespace PersonalFinanceDashboard.Controllers
             return Ok(new { message = $"Synced {newTransactions.Count} new transactions." });
         }
 
+        [HttpPost("sync-investments")]
+        public async Task<IActionResult> SyncInvestments([FromBody] SyncInvestmentsRequestDto requestDto)
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                return Unauthorized("User is not authenticated.");
+            }
+
+            var plaidItem = await _context.PlaidItems
+                .FirstOrDefaultAsync(pi => pi.ID == requestDto.PlaidItemId && pi.UserID == currentUser.Id);
+
+            if (plaidItem == null)
+            {
+                return NotFound("Plaid item not found for the current user.");
+            }
+
+            InvestmentsHoldingsGetRequest request = new InvestmentsHoldingsGetRequest
+            {
+                AccessToken = plaidItem.AccessToken,
+            };
+
+            var response = await _plaidClient.InvestmentsHoldingsGetAsync(request);
+            foreach (var plaidSecurity in response.Securities)
+            {
+                // Check if we already have this security in our database
+                var existingSecurity = await _context.Securities
+                    .FirstOrDefaultAsync(s => s.PlaidSecurityId == plaidSecurity.SecurityId);
+
+                if (existingSecurity == null)
+                {
+                    var newSecurity = new Security
+                    {
+                        PlaidSecurityId = plaidSecurity.SecurityId,
+                        TickerSymbol = plaidSecurity.TickerSymbol,
+                        Name = plaidSecurity.Name,
+                        Type = plaidSecurity.Type,
+                        ClosePrice = plaidSecurity.ClosePrice,
+                        ClosePriceAsOf = plaidSecurity.ClosePriceAsOf?.ToDateTime(TimeOnly.MinValue)
+                    };
+                    _context.Securities.Add(newSecurity);
+                }
+                else
+                {
+                    existingSecurity.ClosePrice = plaidSecurity.ClosePrice;
+                    existingSecurity.ClosePriceAsOf = plaidSecurity.ClosePriceAsOf?.ToDateTime(TimeOnly.MinValue);
+                }
+            }
+            await _context.SaveChangesAsync();
+
+            foreach (var holding in response.Holdings)
+            {
+
+                var financialAccount = await _context.FinancialAccounts
+                    .FirstOrDefaultAsync(fa => fa.PlaidAccountID == holding.AccountId);
+
+                var localSecurity = await _context.Securities
+                    .FirstOrDefaultAsync(s => s.PlaidSecurityId == holding.SecurityId);
+
+                if (financialAccount == null || localSecurity == null)
+                {
+                    continue;
+                }
+                var existingHolding = await _context.Holdings
+                    .FirstOrDefaultAsync(h => h.FinancialAccountId == financialAccount.ID && h.SecurityId == localSecurity.ID);
+
+                if (existingHolding == null)
+                {
+                    var newHolding = new Holding
+                    {
+                        FinancialAccountId = financialAccount.ID,
+                        SecurityId = localSecurity.ID,
+                        Quantity = holding.Quantity,
+                        CostBasis = holding.CostBasis ?? 0m,
+                        InstitutionValue = holding.InstitutionValue
+                    };
+                    _context.Holdings.Add(newHolding);
+                }
+                else
+                {
+                    // If it exists, update its values
+                    existingHolding.Quantity = holding.Quantity;
+                    existingHolding.CostBasis = holding.CostBasis ?? existingHolding.CostBasis;
+                    existingHolding.InstitutionValue = holding.InstitutionValue;
+                }
+            }
+            return Ok();
+
+        }
+
         public class PublicTokenExchangeRequestDto
         {
             public string? PublicToken { get; set; }
         }
 
         public class SyncTransactionsRequestDto
+        {
+            public int PlaidItemId { get; set; }
+        }
+        public class SyncInvestmentsRequestDto
         {
             public int PlaidItemId { get; set; }
         }
