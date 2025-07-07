@@ -220,90 +220,87 @@ namespace PersonalFinanceDashboard.Controllers
         public async Task<IActionResult> SyncInvestments([FromBody] SyncInvestmentsRequestDto requestDto)
         {
             var currentUser = await _userManager.GetUserAsync(User);
-            if (currentUser == null)
-            {
-                return Unauthorized("User is not authenticated.");
-            }
+            if (currentUser == null) return Unauthorized("User is not authenticated.");
 
             var plaidItem = await _context.PlaidItems
                 .FirstOrDefaultAsync(pi => pi.ID == requestDto.PlaidItemId && pi.UserID == currentUser.Id);
+            if (plaidItem == null) return NotFound("Linked investment item not found.");
 
-            if (plaidItem == null)
+            var request = new InvestmentsHoldingsGetRequest
             {
-                return NotFound("Plaid item not found for the current user.");
-            }
-
-            InvestmentsHoldingsGetRequest request = new InvestmentsHoldingsGetRequest
-            {
-                AccessToken = plaidItem.AccessToken,
+                AccessToken = plaidItem.AccessToken
             };
-
             var response = await _plaidClient.InvestmentsHoldingsGetAsync(request);
+
             foreach (var plaidSecurity in response.Securities)
             {
-                // Check if we already have this security in our database
                 var existingSecurity = await _context.Securities
                     .FirstOrDefaultAsync(s => s.PlaidSecurityId == plaidSecurity.SecurityId);
-
                 if (existingSecurity == null)
                 {
-                    var newSecurity = new Security
+                    _context.Securities.Add(new Security
                     {
                         PlaidSecurityId = plaidSecurity.SecurityId,
                         TickerSymbol = plaidSecurity.TickerSymbol,
                         Name = plaidSecurity.Name,
                         Type = plaidSecurity.Type,
                         ClosePrice = plaidSecurity.ClosePrice,
-                        ClosePriceAsOf = plaidSecurity.ClosePriceAsOf?.ToDateTime(TimeOnly.MinValue)
-                    };
-                    _context.Securities.Add(newSecurity);
-                }
-                else
-                {
-                    existingSecurity.ClosePrice = plaidSecurity.ClosePrice;
-                    existingSecurity.ClosePriceAsOf = plaidSecurity.ClosePriceAsOf?.ToDateTime(TimeOnly.MinValue);
+                        ClosePriceAsOf = plaidSecurity.ClosePriceAsOf.HasValue ? plaidSecurity.ClosePriceAsOf.Value.ToDateTime(TimeOnly.MinValue) : null
+                    });
                 }
             }
             await _context.SaveChangesAsync();
 
-            foreach (var holding in response.Holdings)
+            foreach (var plaidHolding in response.Holdings)
             {
-
-                var financialAccount = await _context.FinancialAccounts
-                    .FirstOrDefaultAsync(fa => fa.PlaidAccountID == holding.AccountId);
-
-                var localSecurity = await _context.Securities
-                    .FirstOrDefaultAsync(s => s.PlaidSecurityId == holding.SecurityId);
-
-                if (financialAccount == null || localSecurity == null)
+                try
                 {
-                    continue;
-                }
-                var existingHolding = await _context.Holdings
-                    .FirstOrDefaultAsync(h => h.FinancialAccountId == financialAccount.ID && h.SecurityId == localSecurity.ID);
+                    var localAccount = await _context.FinancialAccounts
+                        .FirstOrDefaultAsync(a => a.PlaidAccountID == plaidHolding.AccountId);
 
-                if (existingHolding == null)
-                {
-                    var newHolding = new Holding
+                    if (localAccount == null)
                     {
-                        FinancialAccountId = financialAccount.ID,
-                        SecurityId = localSecurity.ID,
-                        Quantity = holding.Quantity,
-                        CostBasis = holding.CostBasis ?? 0m,
-                        InstitutionValue = holding.InstitutionValue
-                    };
-                    _context.Holdings.Add(newHolding);
+                        continue;
+                    }
+
+                    var localSecurity = await _context.Securities
+                        .FirstOrDefaultAsync(s => s.PlaidSecurityId == plaidHolding.SecurityId);
+
+                    if (localSecurity == null)
+                    {
+                        continue;
+                    }
+
+                    var existingHolding = await _context.Holdings
+                        .FirstOrDefaultAsync(h => h.FinancialAccountId == localAccount.ID && h.SecurityId == localSecurity.ID);
+
+                    if (existingHolding == null)
+                    {
+                        var newHolding = new Holding
+                        {
+                            FinancialAccountId = localAccount.ID,
+                            SecurityId = localSecurity.ID,
+                            Quantity = plaidHolding.Quantity,
+                            CostBasis = plaidHolding.CostBasis ?? 0m,
+                            InstitutionValue = plaidHolding.InstitutionValue
+                        };
+                        _context.Holdings.Add(newHolding);
+                    }
+                    else
+                    {
+                        existingHolding.Quantity = plaidHolding.Quantity;
+                        existingHolding.CostBasis = plaidHolding.CostBasis ?? existingHolding.CostBasis;
+                        existingHolding.InstitutionValue = plaidHolding.InstitutionValue;
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    // If it exists, update its values
-                    existingHolding.Quantity = holding.Quantity;
-                    existingHolding.CostBasis = holding.CostBasis ?? existingHolding.CostBasis;
-                    existingHolding.InstitutionValue = holding.InstitutionValue;
+                    Console.WriteLine(ex.ToString());
+                    throw;
                 }
             }
-            return Ok();
-
+            await _context.SaveChangesAsync();
+            return Ok(new { message = $"Successfully synced {response.Holdings.Count} investment holdings." });
         }
 
         public class PublicTokenExchangeRequestDto

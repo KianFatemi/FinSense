@@ -53,8 +53,11 @@
                         <a class="btn btn-info btn-sm" asp-action="Details" asp-route-id="@account.ID">
                             Delete
                         </a>
-                            <button class="btn btn-info btn-sm sync-button" data-plaid-item-id="@account.PlaidItem?.ID ?? 0">
-                            Sync
+                        <button class="btn btn-info btn-sm sync-button" data-plaid-item-id="@account.PlaidItem?.ID ?? 0">
+                            Sync Transactions
+                        </button>
+                        <button class="btn btn-info btn-sm syncinvest-button" data-plaid-item-id="@account.PlaidItem?.ID ?? 0">
+                            Sync Investments
                         </button>
                         
                     </td>
@@ -158,6 +161,44 @@ else
                 }
             });
         });
+            document.querySelectorAll('.syncinvest-button').forEach(button => {
+                button.addEventListener('click', async function() {
+                    const plaidItemId = this.getAttribute('data-plaid-item-id');
+                    console.log(`Syncing Investments for Plaid Item ID: ${plaidItemId}`);
+
+                    // Provide visual feedback to the user
+                    this.textContent = 'Syncing...';
+                    this.disabled = true;
+
+                    try {
+                        const response = await fetch('/api/Plaid/sync-investments', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ PlaidItemId: parseInt(plaidItemId) })
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('Server responded with an error during investment sync.');
+                        }
+
+                        const result = await response.json();
+                        alert(result.message); // Show the success message
+
+                    } catch (error) {
+                        console.error('Failed to sync investments:', error);
+                        alert('Failed to sync investments. See console for details.');
+                    }
+                    finally
+                    {
+                        // Reset the button state whether it succeeded or failed
+                        this.textContent = 'Sync Investments';
+                        this.disabled = false;
+                    }
+                });
+            });
+
         });
     </script>
 }

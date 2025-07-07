@@ -74,6 +74,23 @@ namespace PersonalFinanceDashboard.Controllers
                 })
                 .ToListAsync();
 
+            var userHoldings = await _context.Holdings
+                .Include(h => h.Security) // Include Security to get the TickerSymbol
+                .Where(h => userAccountIds.Contains(h.FinancialAccountId))
+                .ToListAsync();
+
+            viewModel.InvestmentsValue = userHoldings.Sum(h => h.InstitutionValue);
+
+            viewModel.InvestmentHoldings = userHoldings
+                .GroupBy(h => h.Security.TickerSymbol) // Group holdings by ticker symbol
+                .Select(group => new InvestmentHoldingViewModel
+                {
+                    TickerSymbol = group.Key ?? "Other", // Use "Other" if ticker is null
+                    TotalValue = group.Sum(h => h.InstitutionValue)
+                   })
+                .OrderByDescending(h => h.TotalValue)
+                .ToList();
+
             //Generate Account Balance History
             var thirtyDaysAgo = DateTime.UtcNow.Date.AddDays(-30);
 

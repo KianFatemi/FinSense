@@ -98,7 +98,7 @@
                     document.getElementById('total-balance-value').textContent = formatCurrency(data.totalBalance);
                     document.getElementById('main-account-value').textContent = formatCurrency(data.mainAccountBalance);
                     document.getElementById('savings-value').textContent = formatCurrency(data.savingsBalance);
-                    document.getElementById('investments-value').textContent = formatCurrency(0); // Placeholder
+                    document.getElementById('investments-value').textContent = formatCurrency(data.investmentsValue);
 
                     // Populate Recent Transactions
                     const transactionList = document.getElementById('recent-transactions-list');
@@ -148,25 +148,48 @@
                         }
                     });
 
-                    // Render Investments Doughnut Chart
-                     const doughnutCtx = document.getElementById('investmentsDoughnutChart').getContext('2d');
-                     new Chart(doughnutCtx, {
-                        type: 'doughnut',
-                        data: {
-                            labels: ['VTI', 'VOO', 'STK', 'KSLN'],
-                            datasets: [{
-                                label: 'Holdings',
-                                data: [40, 30, 15, 15],
-                                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'],
-                            }]
-                        },
-                         options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
-                    });
+        const doughnutCtx = document.getElementById('investmentsDoughnutChart').getContext('2d');
 
-                })
-                .catch(error => {
-                    console.error('There was a problem fetching the dashboard data:', error);
-                });
+        const investmentHoldings = data.investmentHoldings || [];
+
+        const holdingLabels = investmentHoldings.map(h => h.tickerSymbol);
+        const holdingData = investmentHoldings.map(h => h.totalValue);
+
+        const holdingColors = [
+            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
+            '#9966FF', '#FF9F40', '#66D3FA', '#FFD700',
+            '#C9CBCF', '#8BC34A'
+        ];
+
+        // Fallback in case more holdings than colors
+        while (holdingColors.length < holdingLabels.length) {
+            holdingColors.push('#' + Math.floor(Math.random() * 16777215).toString(16));
+        }
+
+        new Chart(doughnutCtx, {
+        type: 'doughnut',
+        data: {
+            labels: holdingLabels,
+            datasets: [{
+                label: 'Holdings',
+                data: holdingData,
+                backgroundColor: holdingColors
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+        });
+
+        })
+        .catch(error => {
+        console.error('There was a problem fetching the dashboard data:', error);
+        });
         });
     </script>
 }
