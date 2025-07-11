@@ -182,3 +182,12 @@ html, body {
 #recent-transactions-list .transaction-amount {
     font-weight: 600;
 }
+
+.sidebar-footer .nav-item .nav-link {
+    color: #a0a0b8;
+    padding: 0.75rem 1.25rem;
+}
+
+    .sidebar-footer .nav-item .nav-link:hover {
+        color: #ffffff;
+    }
