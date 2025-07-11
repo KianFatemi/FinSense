@@ -157,9 +157,11 @@ namespace PersonalFinanceDashboard.Controllers
                 var transactionExists = await _context.Transactions.AnyAsync(t => t.PlaidTransactionId == transaction.TransactionId);
                 if (!transactionExists)
                 {
-                var dateValue = transaction.Date?.ToDateTime(TimeOnly.MinValue) ?? DateTime.MinValue;
+                    var description = transaction.Name ?? transaction.OriginalDescription ?? "N/A";
 
-                decimal amountToStore = transaction.Amount ?? 0m;
+                    var dateValue = transaction.Date?.ToDateTime(TimeOnly.MinValue) ?? DateTime.MinValue;
+
+                    decimal amountToStore = transaction.Amount ?? 0m;
 
                 
                 if (transaction.PersonalFinanceCategory?.Detailed != "INCOME")
@@ -173,7 +175,7 @@ namespace PersonalFinanceDashboard.Controllers
 
                     var newTransaction = new Transaction
                     {
-                        Description = transaction.Counterparties?.FirstOrDefault()?.Name,
+                        Description = description,
                         Amount = amountToStore,
                         TransactionDate = DateTime.SpecifyKind(dateValue, DateTimeKind.Utc),
                         Category = transaction.PersonalFinanceCategory?.Detailed,

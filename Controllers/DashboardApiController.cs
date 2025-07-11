@@ -68,6 +68,7 @@ namespace PersonalFinanceDashboard.Controllers
                 .Take(5)
                 .Select(t => new TransactionViewModel
                 {
+                    VenderName = t.Description,
                     Category = t.Category,
                     Amount = t.Amount,
                     TransactionDate = t.TransactionDate

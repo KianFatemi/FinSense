@@ -15,6 +15,7 @@ namespace PersonalFinanceDashboard.Views.ViewModels
 
     public class TransactionViewModel
     {
+        public string? VenderName { get; set; }
         public string? Category { get; set; }
         public decimal Amount { get; set; }
         public DateTime TransactionDate { get; set; }
