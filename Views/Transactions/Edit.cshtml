@@ -1,0 +1,56 @@
+﻿@model PersonalFinanceDashboard.Models.Transaction
+
+@{
+    ViewData["Title"] = "Edit Transaction";
+}
+
+<div class="container-fluid p-4">
+    <h1 class="mb-4">Edit Transaction</h1>
+
+    <div class="row">
+        <div class="col-md-8 col-lg-6">
+            <div class="card">
+                <div class="card-body">
+                    <form asp-action="Edit">
+                        @Html.AntiForgeryToken()
+
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        <input type="hidden" asp-for="ID" />
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Date</label>
+                            <p class="form-control-plaintext">@Model.TransactionDate.ToShortDateString()</p>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Amount</label>
+                            <p class="form-control-plaintext @(Model.Amount < 0 ? "text-danger" : "text-success")">
+                                @Model.Amount.ToString("C")
+                            </p>
+                        </div>
+
+                        <hr />
+
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label"></label>
+                            <input asp-for="Description" class="form-control" />
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Category" class="form-label"></label>
+                            <input asp-for="Category" class="form-control" />
+                            <span asp-validation-for="Category" class="text-danger"></span>
+                        </div>
+
+                        <div class="mt-4 d-flex gap-2">
+                            <input type="submit" value="Save Changes" class="btn btn-primary" />
+                            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
