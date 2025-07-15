@@ -30,8 +30,8 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#">
-                        <i class="bi bi-receipt me-2"></i> Expenses
+                    <a class="nav-link @(currentController == "Transactions" ? "active" : "")" asp-controller="Transactions" asp-action="Index">
+                        <i class="bi bi-receipt me-2"></i> Transactions
                     </a>
                 </li>
                 <li class="nav-item">
