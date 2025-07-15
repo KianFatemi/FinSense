@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Transactions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -45,5 +46,86 @@ namespace PersonalFinanceDashboard.Controllers
 
             return View(transactions);
         } 
-    }
+
+        //this actions shows the form to ediut a single transaction
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var transaction = await _context.Transactions
+                 .Include(t => t.FinancialAccount)
+                 .FirstOrDefaultAsync(t => t.ID == id);
+
+            if (transaction == null)
+            {
+                return NotFound();
+            }
+
+            var currentUserId = _userManager.GetUserId(User);
+
+            if (transaction.FinancialAccount.UserID != currentUserId)
+            {
+                return Forbid();
+            }
+
+            return View(transaction);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, [Bind("ID,Description,Category")] Models.Transaction transactionUpdate)
+        {
+            if (id != transactionUpdate.ID)
+            {
+                return NotFound();
+            }
+
+            var transactionToUpdate = await _context.Transactions
+                .Include(t => t.FinancialAccount)
+                .FirstOrDefaultAsync(t => t.ID == id);
+
+            if (transactionToUpdate == null)
+            {
+                return NotFound();
+            }
+
+            //ensure transaction belongs to current user
+            var currentUserId = _userManager.GetUserId(User);
+            if (transactionToUpdate.FinancialAccount.UserID != currentUserId)
+            { 
+                return Forbid(); 
+            }
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    //update onlt rge properties that are editable
+                    transactionToUpdate.Description = transactionUpdate.Description;
+                    transactionToUpdate.Category = transactionUpdate.Category;
+
+                    _context.Update(transactionToUpdate);
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!_context.Transactions.Any(e => e.ID == transactionToUpdate.ID))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+
+                return RedirectToAction(nameof(Index));
+            }
+            return View(transactionToUpdate);
+        }
+    } 
 }
+
