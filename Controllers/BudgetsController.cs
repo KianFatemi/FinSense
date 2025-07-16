@@ -97,6 +97,68 @@ namespace PersonalFinanceDashboard.Controllers
             return View(budgetCreate);
         }
 
-        
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var budgetToUpdate = await _context.Budgets
+                .FirstOrDefaultAsync(b => b.Id == id);
+
+            if (budgetToUpdate == null)
+            {
+                return NotFound();
+            }
+
+            var currentUserId = _userManager.GetUserId(User);
+            if (budgetToUpdate.UserID != currentUserId)
+            {
+                return Forbid();
+            }
+
+            return View(budgetToUpdate);
+        }
+
+        public async Task<IActionResult> Edit(int id, [Bind("Id,UserID,Category,Amount")] Budget newBudget)
+        {
+            if (id != newBudget.Id) return NotFound();
+
+            var budgetToUpdate = await _context.Budgets
+                  .FirstOrDefaultAsync(b => b.Id == id);
+
+            if (budgetToUpdate == null)
+            {
+                return NotFound();
+            }
+
+            var currentUserId = _userManager.GetUserId(User);
+            if (budgetToUpdate.UserID != currentUserId)
+            {
+                return Forbid();
+            }
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    budgetToUpdate.Amount = newBudget.Amount;
+                    _context.Update(budgetToUpdate);
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!_context.Budgets.Any(e => e.Id == budgetToUpdate.Id))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+
+                return RedirectToAction(nameof(Index));
+            }
+            return View(budgetToUpdate);
+        }
     }
 }
