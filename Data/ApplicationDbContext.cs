@@ -15,5 +15,6 @@ namespace PersonalFinanceDashboard.Data
         public DbSet<PlaidItem> PlaidItems { get; set; }
         public DbSet<Security> Securities { get; set; }
         public DbSet<Holding> Holdings { get; set; }
+        public DbSet<Budget> Budgets { get; set; }
     }
 }
