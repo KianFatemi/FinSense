@@ -1,0 +1,83 @@
+﻿@model IEnumerable<PersonalFinanceDashboard.Views.ViewModels.BudgetViewModel>
+
+@{
+    ViewData["Title"] = "My Budgets";
+}
+
+<div class="container-fluid p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Monthly Budgets</h1>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-circle-fill me-2"></i>Create New Budget
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <div class="list-group">
+                    @foreach (var budget in Model)
+                    {
+                        // Determine the color of the progress bar based on spending
+                        string progressBarColorClass = "bg-success"; // Default green
+                        if (budget.ProgressPercentage > 75 && budget.ProgressPercentage <= 100)
+                        {
+                            progressBarColorClass = "bg-warning"; // Yellow for nearing the limit
+                        }
+                        else if (budget.ProgressPercentage > 100)
+                        {
+                            progressBarColorClass = "bg-danger"; // Red for over budget
+                        }
+
+                        <div class="list-group-item p-3">
+                            <div class="row align-items-center">
+                                <div class="col-md-3">
+                                    <h5 class="mb-1">@budget.Category</h5>
+                                    <small class="text-muted">
+                                        Budget: @budget.BudgetAmount.ToString("C0")
+                                    </small>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>@budget.ActualSpending.ToString("C") Spent</span>
+                                        <span class="fw-bold @(budget.RemainingAmount < 0 ? "text-danger" : "")">
+                                            @budget.RemainingAmount.ToString("C") Remaining
+                                        </span>
+                                    </div>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar @progressBarColorClass"
+                                             role="progressbar"
+                                             style="width: @(Math.Min(100, budget.ProgressPercentage))%;"
+                                             aria-valuenow="@budget.ProgressPercentage"
+                                             aria-valuemin="0"
+                                             aria-valuemax="100">
+                                            @if (budget.ProgressPercentage > 15)
+                                            {
+                                                <span>@budget.ProgressPercentage.ToString("0")%</span>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 text-end">
+                                    <a asp-action="Edit" asp-route-id="@budget.BudgetId" class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-pencil-square"></i> Edit
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center p-5">
+                    <i class="bi bi-piggy-bank" style="font-size: 3rem; color: #6c757d;"></i>
+                    <p class="lead mt-3">You haven't created any budgets yet.</p>
+                    <p class="text-muted">Click the button below to set your first spending goal.</p>
+                    <a asp-action="Create" class="btn btn-success mt-2">Create Your First Budget</a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
