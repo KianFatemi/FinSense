@@ -14,9 +14,8 @@ namespace PersonalFinanceDashboard.Models
         [Range(0.01, double.MaxValue, ErrorMessage = "Amount must be greater than zero.")]
         public decimal Amount { get; set; }
 
-        [Required]
-        public string UserID { get; set; }
-        public IdentityUser User { get; set; }
+        public string? UserID { get; set; }
+        public IdentityUser? User { get; set; }
 
         [Required]
         [StringLength(100)]

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using PersonalFinanceDashboard.Data;
 using PersonalFinanceDashboard.Models;
@@ -33,9 +34,9 @@ namespace PersonalFinanceDashboard.Controllers
 
             var budgetViewModels = new List<BudgetViewModel>();
 
-            DateTime currentDate = DateTime.UtcNow;
-            DateTime firstDayOfMonth = new DateTime(currentDate.Year, currentDate.Month, 1);
-            DateTime lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1);
+            var today = DateTime.UtcNow;
+            var firstDayOfMonth = new DateTime(today.Year, today.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+            var lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1).AddHours(23).AddMinutes(59).AddSeconds(59);
 
             var userAccountsIds = await _context.FinancialAccounts
                 .Where(a => a.UserID == currentUserId)
@@ -64,7 +65,7 @@ namespace PersonalFinanceDashboard.Controllers
 
         public async Task<IActionResult> Create()
         {
-            //await PopulateCategoriesDropDownList();
+            await PopulateCategoriesDropDownList();
             return View();
         }
 
@@ -74,7 +75,10 @@ namespace PersonalFinanceDashboard.Controllers
         {
             var currentUserId = _userManager.GetUserId(User);
 
-            if (currentUserId == null) return RedirectToAction("Login", "Account");
+            if (currentUserId == null) 
+            {
+                return RedirectToAction("Login", "Account");
+            }
 
             bool budgetExists = await _context.Budgets
                  .AnyAsync(b => b.UserID == currentUserId && b.Category == budgetCreate.Category);
@@ -93,7 +97,7 @@ namespace PersonalFinanceDashboard.Controllers
             }
 
             // something failed redisplay form with available categories
-            //await PopulateCategoriesDropDownList(budget.Category);
+            await PopulateCategoriesDropDownList(budgetCreate.Category);
             return View(budgetCreate);
         }
 
@@ -118,6 +122,8 @@ namespace PersonalFinanceDashboard.Controllers
             return View(budgetToUpdate);
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,UserID,Category,Amount")] Budget newBudget)
         {
             if (id != newBudget.Id) return NotFound();
@@ -159,6 +165,21 @@ namespace PersonalFinanceDashboard.Controllers
                 return RedirectToAction(nameof(Index));
             }
             return View(budgetToUpdate);
+        }
+        private async Task PopulateCategoriesDropDownList(object selectedCategory = null)
+        {
+            var currentUserId = _userManager.GetUserId(User);
+            var userAccountIds = await _context.FinancialAccounts
+                .Where(a => a.UserID == currentUserId)
+                .Select(a => a.ID)
+                .ToListAsync();
+
+            var categoriesQuery = from t in _context.Transactions
+                                  where userAccountIds.Contains(t.FinancialAccountId) && t.Category != null
+                                  orderby t.Category
+                                  select t.Category;
+
+            ViewBag.Categories = new SelectList(await categoriesQuery.Distinct().ToListAsync(), selectedCategory);
         }
     }
 }
