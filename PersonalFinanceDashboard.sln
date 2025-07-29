@@ -5,6 +5,8 @@ VisualStudioVersion = 17.14.36203.30
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PersonalFinanceDashboard", "PersonalFinanceDashboard.csproj", "{18339BE1-5E0B-42E6-8DF3-A5CD0E0682A5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PersonalFinanceDashboard.ML", "PersonalFinanceDashboard.ML\PersonalFinanceDashboard.ML.csproj", "{EE2D6176-908B-4787-AEC2-C91DD682C852}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{18339BE1-5E0B-42E6-8DF3-A5CD0E0682A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{18339BE1-5E0B-42E6-8DF3-A5CD0E0682A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{18339BE1-5E0B-42E6-8DF3-A5CD0E0682A5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EE2D6176-908B-4787-AEC2-C91DD682C852}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EE2D6176-908B-4787-AEC2-C91DD682C852}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EE2D6176-908B-4787-AEC2-C91DD682C852}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EE2D6176-908B-4787-AEC2-C91DD682C852}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
