@@ -16,7 +16,16 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddControllersWithViews();
-builder.Services.AddPlaid(builder.Configuration);
+
+var plaidSection = builder.Configuration.GetSection("Plaid");
+var environment = plaidSection.GetValue<Going.Plaid.Environment>("Environment"); 
+var clientId = plaidSection["ClientId"];
+var secret = plaidSection["Secret"];
+
+var plaidClient = new Going.Plaid.PlaidClient(environment, clientId: clientId, secret: secret);
+
+builder.Services.AddSingleton(plaidClient);
+
 
 builder.Services.AddCors(options =>
 {
