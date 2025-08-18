@@ -15,7 +15,8 @@ using PersonalFinanceDashboard.Models;
 using Holding = PersonalFinanceDashboard.Models.Holding;
 using Security = PersonalFinanceDashboard.Models.Security;
 using Transaction = PersonalFinanceDashboard.Models.Transaction;
-
+using PersonalFinanceDashboard.ML;
+using Microsoft.ML;
 
 namespace PersonalFinanceDashboard.Controllers
 {
@@ -119,6 +120,21 @@ namespace PersonalFinanceDashboard.Controllers
                 return Unauthorized("User is not authenticated.");
             }
 
+            var modelTrainer = new ModelTrainer();
+            var trainedModel = modelTrainer.LoadModelForUser(currentUser.Id);
+            PredictionEngine<TransactionData, CategoryPrediction> predictionEngine = null;
+
+            if (trainedModel != null)
+            {
+                var mlContext = new MLContext();
+                predictionEngine = mlContext.Model.CreatePredictionEngine<TransactionData, CategoryPrediction>(trainedModel);
+                Console.WriteLine("Prediction engine created successfully for user.");
+            }
+            else
+            {
+                Console.WriteLine("No trained model found for user. Categories will not be auto-predicted.");
+            }
+
             var plaidItem = await _context.PlaidItems
                 .FirstOrDefaultAsync(pi => pi.ID == requestDto.PlaidItemId && pi.UserID == currentUser.Id);
 
@@ -162,8 +178,20 @@ namespace PersonalFinanceDashboard.Controllers
                     var dateValue = transaction.Date?.ToDateTime(TimeOnly.MinValue) ?? DateTime.MinValue;
 
                     decimal amountToStore = transaction.Amount ?? 0m;
+                    var category = transaction.PersonalFinanceCategory?.Detailed;
 
-                
+
+                if (predictionEngine != null && !string.IsNullOrEmpty(description))
+                    {
+                        var predictionInput = new TransactionData { Description = description };
+                        var prediction = predictionEngine.Predict(predictionInput);
+
+                        if (!string.IsNullOrEmpty(prediction.PredictedCategory))
+                        {
+                            category = prediction.PredictedCategory;
+                        }
+                    }
+
                 if (transaction.PersonalFinanceCategory?.Detailed != "INCOME")
                     {
                         if (amountToStore > 0)
@@ -178,7 +206,7 @@ namespace PersonalFinanceDashboard.Controllers
                         Description = description,
                         Amount = amountToStore,
                         TransactionDate = DateTime.SpecifyKind(dateValue, DateTimeKind.Utc),
-                        Category = transaction.PersonalFinanceCategory?.Detailed,
+                        Category = category,
                         FinancialAccountId = financialAccount.ID,
                         PlaidTransactionId = transaction.TransactionId
                     };
