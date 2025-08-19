@@ -7,8 +7,11 @@
 }
 
 <div class="container-fluid p-4">
-    <h1 class="mb-4">All Transactions</h1>
-    <button id="train-model-button" class="btn btn-warning">Train AI Model</button>
+   <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>All Transactions</h1>
+    <button id="train-model-button" class="btn btn-warning">
+        <i class="bi bi-robot"></i> Train AI Model </button>
+</div>
     <div class="card">
         <div class="card-body">
             @if (Model.Any())
