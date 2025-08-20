@@ -12,14 +12,14 @@ This project demonstrates a strong command of backend development with ASP.NET C
 * Transaction Synchronization: Robust logic to perform incremental syncs of transaction data, pulling new transactions since the last update and preventing duplicates.
 * Interactive Dashboard UI: A clean, responsive user interface built with ASP.NET Core MVC/Razor Pages, HTML, and CSS.
 * Data-Driven Visualizations: Initial dashboard includes a dynamic doughnut chart, rendered with Chart.js, that visualizes user spending by category.
+* AI Powered Transaction Categorization: Engineered a predictive machine learning model with ML.NET that learns from a user's manual transaction corrections. The model is trained on user specific data and automatically predicts categories for newly synced transactions.
+
 
 ## In Progress / Roadmap
 * Expanded Dashboard Widgets: Adding more visualizations, including a historical balance line chart and summary cards for key metrics.
 * Manual Transaction Management: Allowing users to manually add, edit, and categorize transactions.
 * Budgeting Tools: Implementing features to set monthly budgets by category and track progress.
-* AI-Powered Insights (ML.NET):
-* Developing a machine learning model to predict categories for new transactions based on user behavior.
-* Forecasting future spending patterns.
+* AI Powered Insights (ML.NET) for forecasting future spending patterns.
 * Investment Portfolio Tracking: Integrating with Plaid's Investments product to monitor holdings and performance.
 
 # Tech Stack
