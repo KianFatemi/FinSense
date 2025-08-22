@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.CodeAnalysis.Operations;
 using Microsoft.EntityFrameworkCore;
 using PersonalFinanceDashboard.Data;
 using PersonalFinanceDashboard.Models;
@@ -181,5 +182,45 @@ namespace PersonalFinanceDashboard.Controllers
 
             ViewBag.Categories = new SelectList(await categoriesQuery.Distinct().ToListAsync(), selectedCategory);
         }
+
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var budget = await _context.Budgets.FirstOrDefaultAsync(m => m.Id == id);
+
+            if (budget == null) return NotFound();
+
+            var currentUserId = _userManager.GetUserId(User);
+            if (budget.UserID != currentUserId)
+            {
+                return Forbid();
+            }
+
+            return View(budget);
+        }
+
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var budget = await _context.Budgets.FindAsync(id);
+
+            if (budget != null)
+            {
+                var currentUserId = _userManager.GetUserId(User);
+                if (budget.UserID == currentUserId)
+                {
+                    _context.Budgets.Remove(budget);
+                    await _context.SaveChangesAsync();
+                }
+                else
+                {
+                    return Forbid();
+                }
+            }
+
+            return RedirectToAction(nameof(Index));
+        } 
     }
 }
